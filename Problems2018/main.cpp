@@ -7,9 +7,16 @@
 //
 
 #include <iostream>
+#include "Level.h"
+
+template <typename T>
+void runLevel() {
+    T level;
+    level.Run();
+}
 
 int main(int argc, const char * argv[]) {
     // insert code here...
-    std::cout << "Hello, World!\n";
+    runLevel<Level1>();
     return 0;
 }
