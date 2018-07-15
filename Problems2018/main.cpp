@@ -11,12 +11,12 @@
 
 template <typename T>
 void runLevel() {
-    T level;
-    level.Run();
+	T level;
+	level.Run();
 }
 
 int main(int argc, const char * argv[]) {
-    // insert code here...
-    runLevel<Level1>();
-    return 0;
+	// insert code here...
+	runLevel<Level1>();
+	return 0;
 }

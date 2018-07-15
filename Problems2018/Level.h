@@ -13,76 +13,76 @@
 #include <iostream>
 
 struct TreeNode {
-    int val;
-    TreeNode *left;
-    TreeNode *right;
-    TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+	int val;
+	TreeNode *left;
+	TreeNode *right;
+	TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
 };
 
 struct ListNode {
-    int val;
-    ListNode *next;
-    ListNode(int x) : val(x), next(nullptr) {}
+	int val;
+	ListNode *next;
+	ListNode(int x) : val(x), next(nullptr) {}
 };
 
 struct TreeLinkNode {
-    int val;
-    TreeLinkNode *left, *right, *next;
-    TreeLinkNode(int x) : val(x), left(nullptr), right(nullptr), next(nullptr) {}
+	int val;
+	TreeLinkNode *left, *right, *next;
+	TreeLinkNode(int x) : val(x), left(nullptr), right(nullptr), next(nullptr) {}
 };
 
 struct UndirectedGraphNode {
-    int label;
-    std::vector<UndirectedGraphNode *> neighbors;
-    UndirectedGraphNode(int x) : label(x) {};
+	int label;
+	std::vector<UndirectedGraphNode *> neighbors;
+	UndirectedGraphNode(int x) : label(x) {};
 };
 
 struct Point {
-    int x;
-    int y;
-    Point() : x(0), y(0) {}
-    Point(int a, int b) : x(a), y(b) {}
+	int x;
+	int y;
+	Point() : x(0), y(0) {}
+	Point(int a, int b) : x(a), y(b) {}
 };
 
 inline std::string BoolToStr(bool a) { return a ? "true" : "false"; }
 
 inline void Verify( bool condition, const std::string& message )
 {
-    if( condition )
-    {
-        std::cout << "Test " << message << " success." << std::endl;
-    }
-    else
-    {
-        std::cout << "Test " << message << " failed. " << std::endl;
-    }
+	if( condition )
+	{
+		std::cout << "Test " << message << " success." << std::endl;
+	}
+	else
+	{
+		std::cout << "Test " << message << " failed. " << std::endl;
+	}
 }
 
 template< typename T >
 void Verify( const T& actual, const T& expect, const std::string& message )
 {
-    std::cout << "==========================" << std::endl;
-    if( expect == actual )
-    {
-        std::cout << "Test " << message << " success." << std::endl;
-    }
-    else
-    {
-        std::cout << "Test " << message << " failed. " << std::endl;
-        std::cout << "Expect:" << expect << "  "
-                  << "Acutal:" << actual << std::endl;
-    }
+	std::cout << "==========================" << std::endl;
+	if( expect == actual )
+	{
+		std::cout << "Test " << message << " success." << std::endl;
+	}
+	else
+	{
+		std::cout << "Test " << message << " failed. " << std::endl;
+		std::cout << "Expect:" << expect << "  "
+				  << "Acutal:" << actual << std::endl;
+	}
 }
 
 inline void Verify( bool condition )
 {
-    Verify( condition, "Message" );
+	Verify( condition, "Message" );
 }
 
 #define D_L(LEVELNAME) class Level##LEVELNAME\
 {\
 public:\
-    void Run();\
+	void Run();\
 };
 
 void preOrderTrasveral( TreeNode* node );
