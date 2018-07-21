@@ -979,15 +979,132 @@ static void testLengthOfLongestSubstring()
 
 #pragma mark - 
 
-static void findWordBreak( 	const string& s, vector<string>& output, 
-							unordered_map< string, vector<string> >& m )
-{
+namespace Working1 {
+	static vector<string> findWordBreak( 	const string& s, unordered_set<string>& wordDict, unordered_map< string, vector<string> >& m )
+	{
+		if( m.find( s ) != m.end() )
+		{
+			return m[s];
+		}
+		
+		vector<string> r;
+		if( wordDict.count(s) )	 //a whole string is a word
+		{
+			r.push_back(s);
+		}
+		
+		for( int i = 1; i < s.size(); i++ )
+		{
+			auto firstPartStr = s.substr( 0, i );
+			auto secondPartStr =  s.substr( i, s.size() - i );
+			if( wordDict.find( firstPartStr ) != wordDict.end() )
+			{
+				auto rV = findWordBreak( secondPartStr, wordDict, m );
+				for( const auto& w : rV )
+				{
+					r.push_back( firstPartStr + " " + w );
+				}
+			}
+		}
+		m[s] = r;
+		return r;
+	}
 	
+	vector<string> wordBreak(string s, vector<string>& wordVec ) {
+		unordered_map< string, vector<string> > m;
+		unordered_set< string > wordDict;
+		for( const auto& w : wordVec )
+		{
+			wordDict.insert( w );
+		}
+		
+		return findWordBreak( s, wordDict, m );
+	}
 }
 
-vector<string> wordBreak(string s, vector<string>& wordDict) {
-    // s = "catsanddog"
+static void findWordBreak( 	const string& s, unordered_set<string>& wordDict, unordered_map< string, vector<string> >& m )
+{
+	if( m.find( s ) != m.end() )
+	{
+		return;
+	}
+	
+	if( wordDict.find( s ) != wordDict.end() )
+	{
+		if( m[s].empty() )
+			m[s].push_back( s );
+	}
+	
+	for( int i = 1; i < s.size(); i++ )
+	{
+		auto firstPartStr = s.substr( 0, i );
+			auto secondPartStr =  s.substr( i, s.size() - i );
+			if( wordDict.find( firstPartStr ) != wordDict.end() )
+			{
+				findWordBreak( secondPartStr, wordDict, m );
+				for( const auto& v2 : m[secondPartStr] )
+				{
+					m[s].push_back( firstPartStr + " " + v2 );
+				}
+			}
+	}
+}
+
+vector<string> wordBreak(string s, vector<string>& wordVec ) {
+	unordered_map< string, vector<string> > m;
+	unordered_set< string > wordDict;
+	for( const auto& w : wordVec )
+	{
+		wordDict.insert( w );
+	}
+	
+	findWordBreak( s, wordDict, m );
+	return m[s];
+}
+
+namespace Other
+{
+	unordered_map<string, vector<string>> m;
+
+	vector<string> combine(string word, vector<string> prev){
+		for(int i=0;i<prev.size();++i){
+			prev[i]+=" "+word;
+		}
+		return prev;
+	}
+
+	vector<string> wordBreak(string s, unordered_set<string>& dict) {
+		if(m.count(s)) return m[s]; //take from memory
+		vector<string> result;
+		if(dict.count(s)){ //a whole string is a word
+			result.push_back(s);
+		}
+		for(int i=1;i<s.size();++i){
+			string word=s.substr(i);
+			if(dict.count(word)){
+				string rem=s.substr(0,i);
+				vector<string> prev=combine(word,wordBreak(rem,dict));
+				result.insert(result.end(),prev.begin(), prev.end());
+			}
+		}
+		m[s]=result; //memorize
+		return result;
+	}
+}
+
+static void testWordBreak()
+{
+ 	// s = "catsanddog"
 	// wordDict = ["cat", "cats", "and", "sand", "dog"]
+	string s = "aaaaaaa";
+	vector< string > wordDict = {"aaaa","aa", "a"};
+	string s1 = "catsanddog";
+	vector< string > wordDict1 = {"cat", "cats", "and", "sand", "dog"};
+	auto r = wordBreak( s, wordDict );
+	Verify( r.size(), Working1::wordBreak( s, wordDict ).size(), "" );
+	for( const auto& str : r )
+		cout << str << endl;
+	
 }
 
 
@@ -996,5 +1113,5 @@ vector<string> wordBreak(string s, vector<string>& wordDict) {
 
 void Level1::Run()
 {
-	testLengthOfLongestSubstring();
+	testWordBreak();
 }
