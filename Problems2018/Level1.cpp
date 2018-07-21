@@ -805,10 +805,196 @@ static string largestNumber(vector<int>& nums) {
 	return result;
 }
 
+#pragma mark -
+
+static bool isValidBSTHelper( TreeNode* node, int64_t min, int64_t max )
+{
+	if( node )
+	{
+		if( node->val > min && node->val < max )
+		{
+			return isValidBSTHelper( node->left, min, node->val ) && 
+				   isValidBSTHelper( node->right, node->val, max );
+		}
+		
+		return false;
+	}
+	
+	return true;
+}
+
+static bool isValidBST(TreeNode* root) {
+    return isValidBSTHelper( root, numeric_limits<int64_t>::min(), numeric_limits<int64_t>::max() );
+}
+
+static bool isValidBSTInorderHelper(TreeNode* node, TreeNode*& pre )
+{
+	if( node == nullptr )	return true;
+	if( !isValidBSTInorderHelper( node->left, pre ) )	return false;
+	if( pre != nullptr && pre->val >= node->val ) 		return false;
+	pre = node;
+	return isValidBSTInorderHelper( node->right, pre );
+}
+
+static bool isValidBSTInorder(TreeNode* root)
+{
+	TreeNode* pre = nullptr;
+	return isValidBSTInorderHelper( root, pre );
+}
+
+#pragma mark -
+
+static bool isMatchReg(string s, string p) 
+{
+    // dp[s.size()+1][p.size() + 1] = false
+    // need to init.
+    // p[i] == * then it's true, otherwise it's false.
+    // 3 case
+    // cur -> 'a-z' 
+    // cur -> '.'
+    // cur -> '*' -> 3 options
+    //               match axxx mulitple a
+    //               match a single a
+    //               match empty
+    vector<vector<bool>> dp(p.size() + 1, vector<bool>(s.size() + 1));
+    dp[0][0] = true;
+    for( int i = 2; i < dp.size(); i++ )
+    {
+    	if( p[i-1] == '*' && ( p[i-2] == '.' || ( p[i-2] >= 'a' && p[i-2] <= 'z' ) ) )
+    		dp[i][0] = dp[i-2][0];
+    }
+    
+    for( int i = 1; i < dp.size(); i++ )
+    {
+    	for( int j = 1; j < dp[i].size(); j++ )
+    	{
+    		char pi = p[i - 1];
+    		char si = s[j - 1];
+    		if( pi == si || pi == '.' )
+    		{
+    			dp[i][j] = dp[i-1][j-1];
+    		}
+    		else if( pi == '*' && i - 2 >= 0 )
+    		{
+    			if( p[i-2] == si || p[i-2] == '.' )
+    			{
+					dp[i][j] = dp[i-1][j]   | 	// match one
+						   	   dp[i][j-1]   |   // match multiple
+						   	   dp[i-2][j];		// match zero.
+    			}
+    			else
+    			{
+    				// match zero.
+    				dp[i][j] = dp[i-2][j];
+    			}
+    		}
+    	}
+    }
+    
+    return dp[p.size()][s.size()];
+}
+
+#pragma mark - 
+
+static int reverse(int x) {
+	if( x == INT_MIN )	return 0;
+	
+	int result = 0;
+	int flag = x < 0 ? -1 : 1;
+	x = abs(x);
+	// int from -2^31 ~ 2^31 - 1
+	// -2147483648 ~ 2147483647
+	while( x != 0 )
+	{
+		int last = x % 10;
+		if( result > INT_MAX / 10  )
+			return 0;
+		else if( result == INT_MAX / 10 )
+		{
+			// check last one
+			if( flag == 1 && last > 7 )
+				return 0;
+			else if( flag == -1 && last > 8 )
+				return 0;
+		}
+		
+		result = result * 10 + last;
+		x = x / 10;
+	}
+	
+	return result * flag;
+}
+
+#pragma mark - 
+
+static int lengthOfLongestSubstringV1(string s) {
+    // Given "abcabcbb", the answer is "abc", which the length is 3.
+	// Given "bbbbb", the answer is "b", with the length of 1.
+	// Given "pwwkew", the answer is "wke", with the length of 3. Note that the answer must be a substring, "pwke" is a subsequence and not a substring.	
+	int r = 0;
+	unordered_set< char > myset;
+	for( int i = 0, j = 0; i < s.size() && j < s.size(); )
+	{
+		if( myset.find( s[j] ) == myset.end() )
+		{
+			myset.insert( s[j] );
+			r = max( r, j - i + 1 );
+			j++;
+		}
+		else
+		{
+			myset.erase( s[i] );
+			i++;
+		}
+	}
+	
+	return r;
+}
+
+static int lengthOfLongestSubstringV2(string s) {
+	int r = 0;
+	unordered_map< char, int > mymap;
+	for( int i = 0, j = 0; j < s.size(); j++ )
+	{
+		if( mymap.find( s[j] ) != mymap.end() )
+			i = max(mymap[ s[j] ], i);
+
+		r = max( r, j - i + 1 );
+		mymap[ s[j] ] = j + 1;
+	}
+	
+	return r;
+}
+
+static int lengthOfLongestSubstring(string s) {
+	return lengthOfLongestSubstringV2(s);
+}
+
+static void testLengthOfLongestSubstring()
+{
+	Verify( lengthOfLongestSubstring( "abcabcbb" ), 3, "" );
+	Verify( lengthOfLongestSubstring( "bbbbb" ), 1, "" );
+	Verify( lengthOfLongestSubstring( "pwwkew" ), 3, "" );
+}
+
+#pragma mark - 
+
+static void findWordBreak( 	const string& s, vector<string>& output, 
+							unordered_map< string, vector<string> >& m )
+{
+	
+}
+
+vector<string> wordBreak(string s, vector<string>& wordDict) {
+    // s = "catsanddog"
+	// wordDict = ["cat", "cats", "and", "sand", "dog"]
+}
+
+
 #pragma mark - run
 
 
 void Level1::Run()
 {
-	testFindMissingRanges();
+	testLengthOfLongestSubstring();
 }
