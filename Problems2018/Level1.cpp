@@ -1162,12 +1162,14 @@ public:
         
         return node;
     }
+    
+    TrieNode* GetRoot() const { return root.get(); }
 
 private:
     unique_ptr< TrieNode > root;
 };
 
-static void dfsFindWord(vector<vector<char>>& board, int i, int j, TrieTree& tree, string word, unordered_set<string>& results )
+static void dfsFindWord(vector<vector<char>>& board, int i, int j, TrieNode* node, string word, vector<string>& results )
 {
     if( board.size() == 0 ) return;
     if( i < 0 || j < 0 || i >= board.size() || j >= board[0].size() )   return;
@@ -1176,17 +1178,21 @@ static void dfsFindWord(vector<vector<char>>& board, int i, int j, TrieTree& tre
     if( c == '*' )          return;
 
     word = word + c;
-    if( tree.StartWith( word ) )
+    int index = c - 'a';
+    TrieNode* next = node->children[index].get();
+    if( next != nullptr )
     {
         board[i][j] = '*';
+        if( next->isEnd )
+        {
+            results.push_back( word );
+            next->isEnd = false;    // decouple.
+        }
         
-        if( tree.Search( word ) )
-            results.insert( word );
-        
-        dfsFindWord(board, i-1, j, tree, word, results);
-        dfsFindWord(board, i+1, j, tree, word, results);
-        dfsFindWord(board, i, j-1, tree, word, results);
-        dfsFindWord(board, i, j+1, tree, word, results);
+        dfsFindWord(board, i-1, j, next, word, results);
+        dfsFindWord(board, i+1, j, next, word, results);
+        dfsFindWord(board, i, j-1, next, word, results);
+        dfsFindWord(board, i, j+1, next, word, results);
         
         board[i][j] = c;
     }
@@ -1197,18 +1203,17 @@ static vector<string> findWords(vector<vector<char>>& board, vector<string>& wor
     for( const auto& word : words )
         tree.Insert( word );
 
-    unordered_set<string> results;
+    vector<string> results;
     for( int i = 0; i < board.size(); i++ )
     {
         for( int j = 0; j < board[i].size(); j++ )
         {
             string word;
-            dfsFindWord(board, i, j, tree, word, results );
+            dfsFindWord(board, i, j, tree.GetRoot(), word, results );
         }
     }
     
-    vector<string> r( results.begin(), results.end() );
-    return r;
+    return results;
 }
 
 static void testFindWord()
@@ -1217,6 +1222,8 @@ static void testFindWord()
     vector<string> words = {"oath","pea","eat","rain"};
     board = {{'a','b'},{'c','d'}};
     words = {"ab","cb","ad","bd","ac","ca","da","bc","db","adcb","dabc","abb","acb"};
+    board = {{'a', 'a'}};
+    words = {"a"};
     auto results = findWords( board, words );
     for( auto w : results )
         cout << w << " ";
