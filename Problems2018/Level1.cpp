@@ -1107,6 +1107,127 @@ static void testWordBreak()
 	
 }
 
+#pragma mark -
+class TrieTree
+{
+public:
+    TrieTree()
+    {
+        root = make_unique<TrieNode>();
+    }
+    
+    void Insert( const string& word )
+    {
+        TrieNode* node = root.get();
+        for( const auto& c : word )
+        {
+            int index = c - 'a';
+            if( node->children[index] == nullptr )
+            {
+                node->children[index] = make_unique<TrieNode>();
+            }
+            
+            node = node->children[index].get();
+        }
+        
+        node->isEnd = true;
+    }
+    
+    bool Search( const string& word )
+    {
+        TrieNode* node = root.get();
+        for( const auto& c : word )
+        {
+            int index = c - 'a';
+            if( node->children[index] == nullptr )
+                return false;
+            
+            node = node->children[index].get();
+        }
+        
+        return node && node->isEnd;
+    }
+    
+    bool StartWith( const string& word )
+    {
+        TrieNode* node = root.get();
+        for( const auto& c : word )
+        {
+            int index = c - 'a';
+            if( node->children[index] == nullptr )
+                return false;
+            
+            node = node->children[index].get();
+        }
+        
+        return node;
+    }
+    
+    TrieNode* GetRoot() const { return root.get(); }
+
+private:
+    unique_ptr< TrieNode > root;
+};
+
+static void dfsFindWord(vector<vector<char>>& board, int i, int j, TrieNode* node, string word, vector<string>& results )
+{
+    if( board.size() == 0 ) return;
+    if( i < 0 || j < 0 || i >= board.size() || j >= board[0].size() )   return;
+    
+    char c = board[i][j];
+    if( c == '*' )          return;
+
+    word = word + c;
+    int index = c - 'a';
+    TrieNode* next = node->children[index].get();
+    if( next != nullptr )
+    {
+        board[i][j] = '*';
+        if( next->isEnd )
+        {
+            results.push_back( word );
+            next->isEnd = false;    // decouple.
+        }
+        
+        dfsFindWord(board, i-1, j, next, word, results);
+        dfsFindWord(board, i+1, j, next, word, results);
+        dfsFindWord(board, i, j-1, next, word, results);
+        dfsFindWord(board, i, j+1, next, word, results);
+        
+        board[i][j] = c;
+    }
+}
+
+static vector<string> findWords(vector<vector<char>>& board, vector<string>& words) {
+    TrieTree tree;
+    for( const auto& word : words )
+        tree.Insert( word );
+
+    vector<string> results;
+    for( int i = 0; i < board.size(); i++ )
+    {
+        for( int j = 0; j < board[i].size(); j++ )
+        {
+            string word;
+            dfsFindWord(board, i, j, tree.GetRoot(), word, results );
+        }
+    }
+    
+    return results;
+}
+
+static void testFindWord()
+{
+    vector<vector<char>> board ={{'o','a','a','n'},{'e','t','a','e'},{'i','h','k','r'},{'i','f','l','v'}};
+    vector<string> words = {"oath","pea","eat","rain"};
+    board = {{'a','b'},{'c','d'}};
+    words = {"ab","cb","ad","bd","ac","ca","da","bc","db","adcb","dabc","abb","acb"};
+    board = {{'a', 'a'}};
+    words = {"a"};
+    auto results = findWords( board, words );
+    for( auto w : results )
+        cout << w << " ";
+}
 
 
 
@@ -1115,5 +1236,5 @@ static void testWordBreak()
 
 void Level1::Run()
 {
-	testWordBreak();
+	testFindWord();
 }

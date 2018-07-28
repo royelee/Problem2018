@@ -19,6 +19,11 @@ struct TreeNode {
 	TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
 };
 
+struct TrieNode {
+    std::vector< std::unique_ptr< TrieNode > > children{ 26 };
+    bool                                       isEnd{ false };
+};
+
 struct ListNode {
 	int val;
 	ListNode *next;
