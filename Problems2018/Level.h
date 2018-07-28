@@ -44,6 +44,12 @@ struct Point {
 	Point(int a, int b) : x(a), y(b) {}
 };
 
+struct RandomListNode {
+	int label;
+	RandomListNode *next, *random;
+	RandomListNode(int x) : label(x), next(NULL), random(NULL) {}
+};
+
 inline std::string BoolToStr(bool a) { return a ? "true" : "false"; }
 
 inline void Verify( bool condition, const std::string& message )
