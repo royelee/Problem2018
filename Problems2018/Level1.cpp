@@ -1229,12 +1229,155 @@ static void testFindWord()
         cout << w << " ";
 }
 
+#pragma mark -
+static RandomListNode *copyRandomList(RandomListNode *head) {
+	// Step 1 create copy random.
+	RandomListNode* it = head;
+	while( it != nullptr )
+	{
+		auto pNext = it->next;
+		
+		auto pNew = new RandomListNode( it->label );
+		it->next = pNew;
+		pNew->next = pNext;
+		
+		it = pNext;
+	}
+	
+	// Step 2 assign to random node.
+	it = head;
+	while( it != nullptr )
+	{
+		auto pRandom = it->random;
+		if( pRandom != nullptr )
+			it->next->random = pRandom->next;
+		
+		it = it->next->next;
+	}
+	
+	// Step 3 restore original list.
+	auto pCopyHead = new RandomListNode(-1);
+	it = head;
+	auto pCopyIt = pCopyHead;
+	while( it != nullptr )
+	{
+		auto pCopy = it->next;
+		auto pNext = pCopy->next;
+		
+		it->next = pNext;
+		pCopyIt->next = pCopy;
+		pCopyIt = pCopy;
+		it = pNext;
+	}
 
+	auto pRtn = pCopyHead->next;
+	delete pCopyHead;
+	return pRtn;
+}
+
+#pragma mark -
+static double myPow(double x, int n)
+{
+	if( n == 0 )	return 1;
+	else if( n < 0 )
+	{
+		x = 1 / x;
+		if( n == INT_MIN )
+		{
+			n = INT_MAX;
+			return x * myPow( x, n);
+		}
+		n = -n;
+	}
+	return n % 2 == 0 ? myPow( x * x, n / 2 ) : x * myPow( x * x, n / 2 );
+}
+
+static double myPowInt(double x, int n)
+{
+	if( n == 0 )	return 1;
+	int64_t nn = abs( int64_t( n ) );
+	double ans = 1;
+	double xx = n < 0 ? 1/x : x;
+	while( nn != 0 )
+	{
+		if( ( nn & 1 ) == 1 )	ans *= xx;
+		xx *= xx;
+		nn = nn >> 1;
+	}
+	return ans;
+}
+
+#pragma mark - 
+int firstMissingPositive(vector<int>& nums) 
+{
+	// [3,4,-1,1]
+	for( int i = 0; i < nums.size(); ++i )
+	{
+		while( nums[i] > 0 && nums[i] - 1 < nums.size() && nums[nums[i]-1] != nums[i] )
+			swap( nums[nums[i]-1], nums[i]);
+	}
+	
+	for( int i = 0; i < nums.size(); i++ )
+		if( nums[i] != i + 1 )
+			return i + 1;
+			
+	return nums.size() + 1;
+}
+
+#pragma mark -
+void wiggleSort(vector<int>& nums) 
+{
+}
+
+#pragma mark -
+int _partion( vector<int>& nums, int start, int end )
+{
+	// [ 3 2 1 4]
+	int pivot = nums[end];
+	int lo = start;
+	for( int i = start; i < end; i++ )
+	{
+		if( nums[i] < pivot )
+		{
+			swap( nums[i], nums[lo] );
+			lo++;
+		}
+	}
+	swap( nums[lo], nums[end] );
+	return lo;
+}
+
+int _findKthElement(vector<int>& nums, int start, int end, int k )
+{
+	int pivotIndex = _partion( nums, start, end );
+	int pivotCount = pivotIndex - start + 1;	// [ 0 1 p 2 3], so pivot count = 3
+	if( k == pivotCount )
+	{
+		return nums[pivotIndex];
+	}
+	else if( k < pivotCount )
+	{
+		return _findKthElement(nums, start, pivotIndex - 1, k );
+	}
+	else
+	{
+		return _findKthElement(nums, pivotIndex + 1, end, k - pivotCount );
+	}
+}
+
+int findKthLargest(vector<int>& nums, int k)
+{
+	if( k > 0 && k <= nums.size() )
+		return _findKthElement( nums, 0, nums.size() - 1, nums.size() - k + 1 );
+	
+	return -1;
+}
 
 #pragma mark - run
 
 
 void Level1::Run()
 {
-	testFindWord();
+	vector<int> v = {3,2,3,1,2,4,5,5,6};
+	cout << findKthLargest(v, 2);
 }
