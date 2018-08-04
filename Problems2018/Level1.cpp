@@ -1325,11 +1325,6 @@ int firstMissingPositive(vector<int>& nums)
 }
 
 #pragma mark -
-void wiggleSort(vector<int>& nums) 
-{
-}
-
-#pragma mark -
 int _partion( vector<int>& nums, int start, int end )
 {
 	// [ 3 2 1 4]
@@ -1347,37 +1342,208 @@ int _partion( vector<int>& nums, int start, int end )
 	return lo;
 }
 
-int _findKthElement(vector<int>& nums, int start, int end, int k )
-{
-	int pivotIndex = _partion( nums, start, end );
-	int pivotCount = pivotIndex - start + 1;	// [ 0 1 p 2 3], so pivot count = 3
-	if( k == pivotCount )
-	{
-		return nums[pivotIndex];
-	}
-	else if( k < pivotCount )
-	{
-		return _findKthElement(nums, start, pivotIndex - 1, k );
-	}
-	else
-	{
-		return _findKthElement(nums, pivotIndex + 1, end, k - pivotCount );
-	}
-}
-
 int findKthLargest(vector<int>& nums, int k)
 {
 	if( k > 0 && k <= nums.size() )
-		return _findKthElement( nums, 0, nums.size() - 1, nums.size() - k + 1 );
+	{
+		k = nums.size() - k;
+		int lo = 0;
+		int hi = nums.size() - 1;
+		while( lo < hi )
+		{
+			int pivotIndex = _partion( nums, lo, hi );
+			if( pivotIndex == k )
+				break;
+			else if( k < pivotIndex )
+				hi = pivotIndex - 1;
+			else
+				lo = pivotIndex + 1;
+		}
+	}
 	
-	return -1;
+	return nums[k];
+}
+
+static void threeWayPartition( vector<int>& nums, int mid )
+{
+	int n = nums.size();
+	int i = 0, j = 0, k = n - 1;
+	while (j <= k) {
+		if (nums[j] > mid)
+			swap(nums[i++], nums[j++]);
+		else if (nums[j] < mid)
+			swap(nums[j], nums[k--]);
+		else
+			j++;
+	}
+}
+
+void wiggleSort(vector<int>& nums) {
+	int n = nums.size();
+	
+	// Find a median.
+	auto midptr = nums.begin() + n / 2;
+	nth_element(nums.begin(), midptr, nums.end());
+	int mid = *midptr;
+	
+	// Index-rewiring.
+#define A(i) nums[(1+2*(i)) % (n|1)]
+	
+	// 3-way-partition-to-wiggly in O(n) time with O(1) space.
+	int i = 0, j = 0, k = n - 1;
+	while (j <= k) {
+		if (A(j) > mid)
+			swap(A(i++), A(j++));
+		else if (A(j) < mid)
+			swap(A(j), A(k--));
+		else
+			j++;
+	}
+}
+
+int newIndex(int index, int n) {
+	return (1 + 2*index) % (n | 1);
+}
+
+void TestWiggleSortII()
+{
+	//	vector<int> nums = {1, 3, 5, 0, 2, 4};
+	vector<int> old = {18, 17, 19, 16,  15,  11, 14, 10, 13, 12};
+	std::nth_element(old.begin(), old.begin() + old.size()/2, old.end());
+	vector<int> nums(old.size());
+	for( int i = 0; i < old.size(); i++ )
+		nums[i] = old[newIndex(i, old.size())];
+	//std::nth_element(nums.begin(), nums.begin() + nums.size()/2, nums.end());
+	threeWayPartition(nums, *(old.begin() + old.size()/2));
+	wiggleSort( nums );
+	
+	//	std::vector<int> v{5, 6, 4, 3, 2, 6, 7, 9, 3};
+	//	vector<int> v{18, 17, 19 ,16 , 15 , 11 ,14 ,10 ,13, 12};
+	//	std::nth_element(v.begin(), v.begin() + v.size()/2, v.end());
+	//	std::cout << "The median is " << v[v.size()/2] << '\n';
+	//	for( auto& i : v )
+	//		cout << i << ",";
+	//	cout << endl;
+	//
+	//	std::nth_element(v.begin(), v.begin()+1, v.end(), std::greater<int>());
+	//	std::cout << "The second largest element is " << v[1] << '\n';
+	//	for( auto& i : v )
+	//		cout << i << ",";
+	//	cout << endl;
+}
+
+#pragma mark - 
+namespace I
+{
+
+void wiggleSort(vector<int> &nums) 
+{
+	// [3, 5, 2, 1, 6, 4] -> [1, 6, 2, 5, 3, 4].
+	// [a, b, c]   a b ok -> a <= b  after swap
+	// [a <= b' >= c' ]               
+	// nums[0] <= nums[1] >= nums[2]
+	// so i % 2 == 0 -> nums[i-1] >= nums[i]
+	//    i % 2 == 1 -> nums[i-1] <= nums[i]
+	for( int i = 1; i < nums.size(); i++ )
+	{
+		if( ( i % 2 == 0 && nums[i-1] < nums[i] ) || ( i % 2 == 1 && nums[i-1] > nums[i] ) )
+			swap(nums[i-1], nums[i]);
+	}
+}
+
+}
+
+#pragma mark -
+bool isPalindrome(string s) {
+	int front = 0, end = s.size() - 1;
+	while( front <= end )
+	{
+		while( !isalnum( s[front] ) ) front++;
+		while( !isalnum( s[end] ) )   end--;
+		
+		if( front > end )               break;
+		
+		if( tolower( s[front] ) != tolower( s[end] ) )
+			return false;
+		
+		front++;
+		end--;
+	}
+	
+	return true;
+}
+
+void TestIsPalindrome()
+{
+	
+	Verify( isPalindrome( "race e car" ), true, "1" );
+	Verify( isPalindrome( "0P" ), false, "0P" );
+	Verify( isPalindrome( "ac" ), false, "ac" );
+	Verify( isPalindrome( "aba" ), true, "aba" );
+}
+
+#pragma mark -
+uint32_t reverseBits(uint32_t n) {
+	uint32_t r = 0;
+	int i = 0;
+	while( i != 32 )
+	{
+		uint32_t lastBit = n & 1;
+		r = ( r << 1 ) + lastBit;
+		n = n >> 1;
+		i++;
+	}
+	return r;
+}
+
+#pragma mark -
+int _coinChange( vector<int>& coins, int amount, vector<int>& minCost )
+{
+	// -1 never accesss
+	// 0 can't make change
+	// > 0 actual min change
+	if( minCost[amount] > -1 )
+		return minCost[amount];
+	
+	int m = INT_MAX;
+	for( auto c : coins )
+	{
+		int cMin = INT_MAX;
+		if( amount - c == 0 )
+		{
+			// 1 time
+			cMin = 1;
+		}
+		else if( amount - c > 0 )
+		{
+			int tmp = _coinChange( coins, amount - c, minCost );
+			if( tmp != INT_MAX )
+				cMin = 1 + tmp;
+		}
+		// Other cases fallback to INT_MAX.
+		
+		m = min( m, cMin );
+	}
+	
+	minCost[amount] = m;
+	return m;
+}
+
+int coinChange(vector<int>& coins, int amount) {
+	vector<int> dp( amount + 1, -1 );
+	int c = _coinChange( coins, amount, dp );
+	return c == INT_MAX ? -1 : c;
+}
+
+void testCoinChange()
+{
+	vector<int> coins = {2};
+	cout << coinChange(coins, 3);
 }
 
 #pragma mark - run
 
-
 void Level1::Run()
 {
-	vector<int> v = {3,2,3,1,2,4,5,5,6};
-	cout << findKthLargest(v, 2);
+	testCoinChange();
 }
