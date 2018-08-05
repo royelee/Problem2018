@@ -13,6 +13,7 @@
 #include <unordered_set>
 #include <vector>
 #include <queue>
+#include <stack>
 
 extern "C"
 {
@@ -1497,53 +1498,365 @@ uint32_t reverseBits(uint32_t n) {
 }
 
 #pragma mark -
-int _coinChange( vector<int>& coins, int amount, vector<int>& minCost )
-{
-	// -1 never accesss
-	// 0 can't make change
-	// > 0 actual min change
-	if( minCost[amount] > -1 )
-		return minCost[amount];
-	
-	int m = INT_MAX;
-	for( auto c : coins )
-	{
-		int cMin = INT_MAX;
-		if( amount - c == 0 )
-		{
-			// 1 time
-			cMin = 1;
-		}
-		else if( amount - c > 0 )
-		{
-			int tmp = _coinChange( coins, amount - c, minCost );
-			if( tmp != INT_MAX )
-				cMin = 1 + tmp;
-		}
-		// Other cases fallback to INT_MAX.
-		
-		m = min( m, cMin );
-	}
-	
-	minCost[amount] = m;
-	return m;
-}
 
 int coinChange(vector<int>& coins, int amount) {
-	vector<int> dp( amount + 1, -1 );
-	int c = _coinChange( coins, amount, dp );
-	return c == INT_MAX ? -1 : c;
+	if( amount == 0 ) return 0;
+	
+	vector<int> dp( amount + 1, INT_MAX );
+	for( int i = 1; i < dp.size(); i++ )
+	{
+		for( auto c : coins )
+		{
+			if( i - c == 0 )
+				dp[i] = 1;
+			else if( i - c > 0 && dp[i-c] != INT_MAX )
+				dp[i] = min( dp[i-c] + 1, dp[i] );
+		}
+	}
+	return dp[amount] == INT_MAX ? -1 : dp[amount];
 }
 
 void testCoinChange()
 {
-	vector<int> coins = {2};
-	cout << coinChange(coins, 3);
+	vector<int> coins = {186,419,83,408};
+	cout << coinChange(coins, 6249 );
 }
+
+#pragma mark - 
+class Graph
+{
+	vector< vector< int > > edges;
+	vector< bool > 			nodes;
+	
+public:
+	Graph( int count )
+		: edges( count, vector<int>() ), nodes( count, false )
+	{
+	}
+	
+	void AddEdge( int v, int e )
+	{
+		edges[v].push_back( e );
+		nodes[v] = true;
+	}
+	
+	void AddNode( int v )
+	{
+		nodes[v] = true;
+	}
+	
+	string Sort()
+	{
+		vector< bool > visits( edges.size(), false );
+		stack< int > orders;
+		for( int i = 0; i < edges.size(); i++ )
+		{
+			if( nodes[i] )
+				SortHelper( i, visits, orders );
+		}
+		
+		string out;
+		while( !orders.empty() )
+		{
+			int i = orders.top();
+			out += ('a' + i);
+			orders.pop();
+		}
+		return out;
+	}
+	
+private:
+	void SortHelper( int i , vector< bool >& visits, stack< int >& orders )
+	{
+		if( visits[i] )
+			return;
+
+		visits[i] = true;
+		for( auto e : edges[i] )
+		{
+			SortHelper( e, visits, orders );
+		}
+		orders.push( i );
+	}
+};
+
+string alienOrder(vector<string> &words) 
+{
+	Graph g( 26 );
+	for( auto& word : words )
+	{
+		for( auto& c : word )
+			g.AddNode( c - 'a' );
+	}
+	
+	for( int i = 0; i < words.size() - 1; i++ )
+	{
+		auto& word1 = words[i];
+		auto& word2 = words[i+1];
+		for( int j = 0; j < min( word1.size(), word2.size() ); j++ )
+		{
+			if( word1[j] != word2[j] )
+			{
+				g.AddEdge( word1[j] - 'a', word2[j] - 'a' );
+				break;
+			}
+		}
+	}
+	
+	return g.Sort();
+}
+
+class SolutionOther {
+private:
+	static constexpr int N = 26;
+public:
+	string alienOrder(vector<string>& words) {
+		unordered_map<char, unordered_set<char>> dict;
+		int indegree[N]{};
+		
+		int numChars = 0;
+		
+		for (auto& w : words) {
+			for (auto& c : w) {
+				if (indegree[c - 'a'] == 0) {
+					indegree[c - 'a'] = 1;
+					++numChars;
+				}
+			}
+		}
+		
+		bool ok = true;
+		int n = words.size();
+		for (int i = 1; i < n; ++i) {
+			auto& prev = words[i-1];
+			auto& curr = words[i];
+			
+			int cmpLen = std::min(curr.size(), prev.size());
+			for (int j = 0; j < cmpLen; ++j) {
+				char u = prev[j], v = curr[j];
+				if (u != v) {
+					std::tie(std::ignore, ok) = dict[u].insert(v);
+					if (ok) {
+						++indegree[v - 'a'];
+					}
+					break;
+				}
+			}
+		}
+		
+		string result;
+		std::queue<char> q;
+		
+		for (int i = 0; i < N; ++i) {
+			if (indegree[i] == 1) {
+				q.push('a' + i);
+			}
+		}
+		
+		while (!q.empty()) {
+			char u = q.front();
+			q.pop();
+			result += u;
+			for (auto& v : dict[u]) {
+				if (--indegree[v - 'a'] == 1) {
+					q.push(v);
+				}
+			}
+		}
+		
+		return result.size() == numChars ? result : "";
+		
+	}
+};
+
+void testAlienOrder()
+{
+	vector<string> words = { "wrt",
+		"wrf",
+		"er",
+		"ett",
+		"rftt" };
+	//words = {"baa", "abcd", "abca", "cab", "cad"};
+	words = {"zy","zx"};
+	//words = {"wrt", "wrf"};
+	SolutionOther s;
+	cout << alienOrder( words ) << endl;
+}
+
+#pragma mark -
+
+int maxProduct(vector<int>& nums)
+{
+	if( nums.size() == 0 )	return 0;
+	
+	int localMin = nums[0];
+	int localMax = nums[0];
+	int r = localMax;
+	for( int i = 1; i < nums.size(); i++ )
+	{
+		if( nums[i] < 0 )
+		{
+			int tmp = max( localMin * nums[i], nums[i] );
+			localMin = min( localMax * nums[i], nums[i] );
+			localMax = tmp;
+		}
+		else
+		{
+			localMax = max( localMax * nums[i], nums[i] );
+			localMin = min( localMin * nums[i], nums[i] );
+		}
+		
+		r = max( r, localMax );
+	}
+	return r;
+}
+
+#pragma mark -
+namespace Immutable {
+class NumMatrix {
+	vector<vector<int>> sumMatrix;
+public:
+	NumMatrix(vector<vector<int>> matrix) {
+		sumMatrix = matrix;
+		
+		sumMatrix[0][0] = matrix[0][0];
+		for( int i = 1; i < matrix.size(); i++ )
+		{
+			sumMatrix[i][0] += sumMatrix[i-1][0];
+			sumMatrix[0][i] += sumMatrix[0][i-1];
+		}
+		
+		for( int i = 1; i < matrix.size(); i++ )
+		{
+			for( int j = 1; j < matrix[i].size(); j++ )
+			{
+				sumMatrix[i][j] += sumMatrix[i-1][j] + sumMatrix[i][j-1] - sumMatrix[i-1][j-1];
+			}
+		}
+	}
+	
+	int sumRegion(int row1, int col1, int row2, int col2)
+	{
+		int total = sumMatrix[row2][col2];
+		if( row1 - 1 >= 0 && col1 - 1 >= 0 )
+			total = total - sumMatrix[row1-1][col2] - sumMatrix[row2][col1-1] + sumMatrix[row1-1][col1-1];
+		
+		return total;
+	}
+};
+	
+void testNumMatrix()
+{
+	vector<vector<int>> matrix = {
+		{3, 0, 1, 4, 2},
+		{5, 6, 3, 2, 1},
+		{1, 2, 0, 1, 5},
+		{4, 1, 0, 1, 7},
+		{1, 0, 3, 0, 5}
+	};
+	NumMatrix m( matrix );
+	Verify( m.sumRegion(2, 1, 4, 3), 8, "T1");
+	Verify( m.sumRegion(1, 1, 2, 2), 11, "T2" );
+	Verify( m.sumRegion(1, 2, 2, 4), 12, "T3" );
+}
+	
+} 	// namespace Immutable
+
+#pragma mark -
+namespace Mutable
+{
+
+class NumMatrix {
+public:
+    NumMatrix(vector<vector<int>> matrix) {
+        m_matrix = matrix;
+        int rowCount = matrix.size();
+        int colCount = rowCount > 0 ? matrix[0].size() : 0;
+        m_bit.resize( rowCount, vector<int>( colCount + 1 ) );
+        
+        for( int i = 0; i < rowCount; i++ )
+        {
+        	for( int j = 0; j < colCount; j++ )
+        	{
+        		Add( i, j, matrix[i][j] );
+        	}
+        }
+    }
+    
+    void update(int row, int col, int val) 
+    {
+    	int old = m_matrix[row][col];
+    	int diff = val - old;
+    	Add( row, col, diff );
+		
+		m_matrix[row][col] = val;
+    }
+    
+    int sumRegion(int row1, int col1, int row2, int col2) 
+    {
+    	int r = 0;
+    	for( int i = row1; i <= row2; i++ )
+    	{
+    		r += Sum( i, col2) - Sum( i, col1 - 1 );
+    	}
+    	return r;
+    }
+    
+private:
+	void Add( int row, int col, int value )
+	{
+		col += 1;
+		int colCount = m_bit[row].size();
+		while( col < colCount )
+		{
+			m_bit[row][col] += value;
+			col += LowBit( col );
+		}
+	}
+	
+	int Sum( int row, int col )
+	{
+		int r = 0;
+		col += 1;
+		while( col > 0 )
+		{
+			r += m_bit[row][col];
+			col -= LowBit( col );
+		}
+		
+		return r;
+	}
+	
+	int LowBit( int value )
+	{
+		return value & (-value);
+	}
+
+	vector<vector<int>> m_matrix;
+	vector<vector<int>> m_bit;	// binary index tree
+};
+
+void testNumMatrix()
+{
+	vector<vector<int>> matrix = {
+		{3, 0, 1, 4, 2},
+		{5, 6, 3, 2, 1},
+		{1, 2, 0, 1, 5},
+		{4, 1, 0, 1, 7},
+		{1, 0, 3, 0, 5}
+	};
+	NumMatrix m( matrix );
+	Verify( m.sumRegion(2, 1, 4, 3), 8, "T1");
+	m.update(3, 2, 2);
+	Verify( m.sumRegion(2, 1, 4, 3), 10, "T2");
+}
+
+}	// namespace mutable
+
 
 #pragma mark - run
 
 void Level1::Run()
 {
-	testCoinChange();
+	Mutable::testNumMatrix();
 }
