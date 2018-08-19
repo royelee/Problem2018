@@ -14,6 +14,8 @@
 #include <vector>
 #include <queue>
 #include <stack>
+#include <functional>
+#include <set>
 
 extern "C"
 {
@@ -1770,9 +1772,9 @@ class NumMatrix {
 public:
     NumMatrix(vector<vector<int>> matrix) {
         m_matrix = matrix;
-        int rowCount = matrix.size();
-        int colCount = rowCount > 0 ? matrix[0].size() : 0;
-        m_bit.resize( rowCount, vector<int>( colCount + 1 ) );
+        auto rowCount = matrix.size();
+        auto colCount = rowCount > 0 ? matrix[0].size() : 0;
+        m_bit.resize( rowCount + 1, vector<int>( colCount + 1 ) );
         
         for( int i = 0; i < rowCount; i++ )
         {
@@ -1794,36 +1796,32 @@ public:
     
     int sumRegion(int row1, int col1, int row2, int col2) 
     {
-    	int r = 0;
-    	for( int i = row1; i <= row2; i++ )
-    	{
-    		r += Sum( i, col2) - Sum( i, col1 - 1 );
-    	}
-    	return r;
+    	return Sum( row2, col2 ) - Sum( row2, col1 - 1 ) - Sum( row1 - 1, col2) + Sum( row1 - 1, col1 - 1);
     }
     
 private:
 	void Add( int row, int col, int value )
 	{
-		col += 1;
-		int colCount = m_bit[row].size();
-		while( col < colCount )
+		for( int i = row + 1; i < m_bit.size(); i += LowBit( i ) )
 		{
-			m_bit[row][col] += value;
-			col += LowBit( col );
+			auto colCount = m_bit[row].size();
+			for( int j = col + 1; j  < colCount; j += LowBit( j) )
+			{
+				m_bit[i][j] += value;
+			}
 		}
 	}
 	
 	int Sum( int row, int col )
 	{
 		int r = 0;
-		col += 1;
-		while( col > 0 )
+		for( int i = row + 1; i > 0; i -= LowBit( i ) )
 		{
-			r += m_bit[row][col];
-			col -= LowBit( col );
+			for( int j = col + 1; j  > 0; j -= LowBit( j) )
+			{
+				r += m_bit[i][j];
+			}
 		}
-		
 		return r;
 	}
 	
@@ -1846,6 +1844,7 @@ void testNumMatrix()
 		{1, 0, 3, 0, 5}
 	};
 	NumMatrix m( matrix );
+	Verify( m.sumRegion(0, 0, 0, 0), 3, "T1");
 	Verify( m.sumRegion(2, 1, 4, 3), 8, "T1");
 	m.update(3, 2, 2);
 	Verify( m.sumRegion(2, 1, 4, 3), 10, "T2");
@@ -1853,10 +1852,552 @@ void testNumMatrix()
 
 }	// namespace mutable
 
+#pragma mark -
+int mySqrt(int x) {
+	// case 1 neg
+	// case 2 INT_MAX
+	// case 3 INT_MIN
+	if( x < 0 )
+		return 0;
+	
+	int64_t as = x;
+	int start = 0;
+	int end = x / 2 + 1;
+	while( start < end )
+	{
+		int64_t mid = start + ( end - start ) / 2;
+		int64_t m2 = mid * mid;
+		if( m2 == as )
+		{
+			start = mid;
+			break;
+		}
+		else if( m2 < as)
+		{
+			start = mid + 1;
+		}
+		else
+		{
+			end = mid - 1;
+		}
+	}
+	return start;
+}
+
+void testMySqrt()
+{
+	for( int i = 0; i <= 10; i++ )
+	{
+		cout << i << " = " << mySqrt( i ) << " c = " << sqrt( i )<< endl;
+	}
+}
+
+#pragma mark - 
+
+int maxPathSumHelper( TreeNode* node, int& globalMax )
+{
+	if( !node )	return 0;
+	int left = max( 0, maxPathSumHelper( node->left, globalMax ) );
+	int right = max( 0, maxPathSumHelper( node->right, globalMax ) );
+	globalMax = max( node->val + left + right, globalMax );
+	return max( left, right ) + node->val;
+}
+
+int maxPathSum(TreeNode* root) 
+{
+	if( !root )	return 0;
+
+    int rtn = INT_MIN;
+    maxPathSumHelper( root, rtn );
+    return rtn;
+}
+
+#pragma mark - 
+
+/*
+Input: S = "ADOBECODEBANC", T = "ABC"
+Output: "BANC"
+
+[ADOBEC]ODEBANC
+A[DOBEC]ODEBANC
+A[DOBECODEBA]NC
+ADO[BECODEBA]NC
+ADOBE[CODEBA]NC
+*/
+string minWindow(string s, string t) {
+	unordered_map< char, int > wordMap;
+	for( auto c : t )
+		wordMap[c]++;
+	int counter = t.size();
+	int start = 0, end = 0, minStart = 0, minEnd = s.size();
+	while( end < s.size() )
+	{
+		auto c = s[end];
+		if( wordMap.find( c ) != wordMap.end() )
+		{
+			if( wordMap[c] > 0 )
+				counter--;
+			--wordMap[c];
+		}
+			
+		while( counter == 0 )
+		{
+			// found, try move start.
+			if( end - start < minEnd - minStart )
+			{
+				minStart = start;
+				minEnd = end;
+			}
+			
+			auto cStart = s[start];
+			if( wordMap.find( cStart ) != wordMap.end() )
+			{
+				if( wordMap[cStart] == 0 )
+					counter++;
+				++wordMap[cStart];
+			}
+			start++;
+		}
+		
+		end++;
+	}
+	
+	return minEnd == s.size() ? "" : s.substr( minStart, minEnd - minStart + 1);
+}
+
+void testMinWindow()
+{
+	string s = "ADOBECODEBANC", t = "ABC";
+	cout << minWindow( s, t ) << endl;
+	
+	s = "aa";
+	t = "aa";
+	cout << minWindow( s, t ) << endl;
+}
+
+#pragma mark -
+namespace Q {
+int strStr(string haystack, string needle) {
+	if( needle.empty() )    return 0;
+	
+	for( int i = 0; i < haystack.size(); i++ )
+	{
+		for( int j = 0; j < needle.size(); j++ )
+		{
+			if( i + j > haystack.size() )
+				return -1;
+			if( haystack[i+j] != needle[j] )
+				break;
+			if( j + 1 == needle.size() )
+				return i;
+		}
+	}
+	
+	return -1;
+}
+	
+void teststrStr()
+{
+	cout << Q::strStr( "mississippi" , "issip" ) << endl;
+}
+
+}	// namespace Q
+
+#pragma mark - 
+
+ListNode *getIntersectionNode(ListNode *headA, ListNode *headB) 
+{
+	// Has intersection.
+	// [A0 A1 A2 C1 C2 C3 B0 B1 C1 C2 C3]
+	// [B0 B1 C1 C2 C3 A0 A1 A2 C1 C2 C3]   
+	if( headA == nullptr || headB == nullptr )	return nullptr;
+	
+	ListNode* pA = headA;
+	ListNode* pB = headB;
+	while( pA != pB )
+	{
+		pA = pA == nullptr ? headB : pA->next;
+		pB = pB == nullptr ? headA : pB->next;
+	}
+    return pA;
+}
+
+#pragma mark -
+string longestCommonPrefix(vector<string>& strs) {
+	if( strs.size() == 0 ) return "";
+	if( strs.size() == 1 ) return strs[0];
+	
+	int max = -1;
+	for( int i = 0; i < strs[0].size(); i++ )
+	{
+		char c = strs[0][i];
+		int j = 1;
+		for( ; j < strs.size(); j++ )
+		{
+			if( strs[j].size() < i + 1 || strs[j][i] != c )
+				break;
+		}
+		
+		if( j == strs.size() )
+			max++;
+		else
+			break;
+	}
+	return max == -1 ? "" : strs[0].substr(0, max + 1);
+}
+
+void testLongestCommonPrefix()
+{
+	vector<string> v = {"aca","cba"};
+	cout << longestCommonPrefix(v);
+}
+
+#pragma mark -
+vector<int> findSubstring(string s, vector<string>& words) {
+	vector<int> res;
+	if( words.size() == 0 )	return res;
+	
+	unordered_map< string, int > targetMap;
+	for( const auto& word : words )
+		targetMap[word]++;
+	int counter = (int)words.size();
+	int len = (int)words[0].size();
+	
+	for( int i = 0; i + counter * len <= s.size(); i++ )
+	{
+		unordered_map< string, int > seen;
+		int t = 0;
+		while( t < counter )
+		{
+			string sub = s.substr( i + t * len, len );
+			if( targetMap.find( sub ) != targetMap.end() )
+			{
+				seen[ sub ]++;
+				if( seen[sub] > targetMap[sub] )
+					break;
+				else
+					t++;
+			}
+			else
+				break;
+		}
+		if( t == counter )
+			res.push_back( i );
+	}
+	
+	return res;        
+}
+	
+#pragma mark -
+int minSubArrayLen(int s, vector<int>& nums) {
+	if( nums.size() == 0 )  return 0;
+	
+	int start = 0, end = 0;
+	int minLen = INT_MAX;
+	int sum = 0;
+	while( end < nums.size() )
+	{
+		sum += nums[end];
+		while( sum >= s )
+		{
+			minLen = min( minLen, end - start + 1 );
+			sum -= nums[start];
+			start++;
+		}
+		end++;
+	}
+	
+	return minLen == INT_MAX ? 0 : minLen;
+}
+
+#pragma mark -
+class MonotonicQueue
+{
+	deque< int > m_queue;
+public:
+	// Push into and remove any value smaller than it
+	void Push( int v )
+	{
+		while( !m_queue.empty() && m_queue.back() < v ) m_queue.pop_back();
+		m_queue.push_back( v );
+	}
+	
+	// Pop from front.
+	void Pop()
+	{
+		m_queue.pop_front();
+	}
+	
+	int GetMax()
+	{
+		return m_queue.front();
+	}
+};
+
+vector<int> maxSlidingWindow(vector<int>& nums, int k) {
+	vector< int > res;
+	MonotonicQueue q;
+	for( int i = 0; i < nums.size(); i++ )
+	{
+		q.Push( nums[i] );
+		if( i + 1 >= k )
+		{
+			res.push_back( q.GetMax() );
+			if( nums[i - k + 1] == q.GetMax() )
+				q.Pop();
+		}
+	}
+	
+	return res;
+}
+
+#pragma mark -
+vector<int> spiralOrder(vector<vector<int>>& matrix) {
+	vector<int> res;
+	if( matrix.empty() ) return res;
+	if( matrix[0].empty() ) return res;
+	
+	int rowBegin = 0, rowEnd = (int)(matrix.size()) - 1;
+	int colBegin = 0, colEnd = (int)(matrix[0].size()) - 1;
+	
+	while( rowBegin <= rowEnd && colBegin <= colEnd )
+	{
+		// Right
+		for( int col = colBegin; col <= colEnd; col++ )
+			res.push_back( matrix[rowBegin][col] );
+		rowBegin++;
+		
+		// Down
+		for( int row = rowBegin; row <= rowEnd; row++ )
+			res.push_back( matrix[row][colEnd] );
+		colEnd--;
+		
+		// Left
+		if( rowBegin <= rowEnd )
+			for( int col = colEnd; col >= colBegin; col-- )
+				res.push_back( matrix[rowEnd][col] );
+		rowEnd--;
+		
+		// Up
+		if( colBegin <= colEnd )
+			for( int row = rowEnd; row >= rowBegin; row-- )
+				res.push_back( matrix[row][colBegin] );
+		colBegin++;
+	}
+	
+	return res;
+}
+
+#pragma mark -
+
+int largestRectangleArea(vector<int> &height)
+{
+	stack< int > s;
+	int res = 0;
+	height.push_back( 0 );	// Putting 0 at the end because it smaller than other, so we don't need to do extra check for stack empty at the end.
+	
+	// 4, 5, 2, 0
+	//       i
+	// s : 4(0)
+	//     pop -> 5(1)
+	//     max = ( 2 - 0 - 1 ) (i - s.top() - 1) * 5 = 5
+	
+	for( int i = 0; i < height.size(); i++ )
+	{
+		while( !s.empty() && height[s.top()] >= height[i] )
+		{
+			auto top = s.top();
+			s.pop();
+			res = max( res, ( i - ( s.empty() ? -1 : s.top() ) - 1 ) * height[top] );	// s.empty is for handling left smaller one is -1.
+		}
+		
+		s.push( i );
+	}
+	
+	return res;
+}
+
+#pragma mark -
+int evalRPN(vector<string>& tokens) {
+	static std::unordered_map<string, function<int(int,int)>> opMap =
+	{
+		{ "+", plus<int>() },
+		{ "-", minus<int>() },
+		{ "*", multiplies<int>() },
+		{ "/", divides<int>() }
+	};
+	
+	stack<int> s;
+	for( const auto& token : tokens )
+	{
+		if( opMap.count( token ) )
+		{
+			auto op2 = s.top();
+			s.pop();
+			auto op1 = s.top();
+			s.pop();
+			s.push( opMap[token]( op1, op2 ) );
+		}
+		else
+		{
+			s.push( stoi( token ) );
+		}
+	}
+	
+	return s.top();
+}
+
+#pragma mark -
+ListNode* mergeKLists(vector<ListNode*>& lists) {
+	auto cmp = []( ListNode* pNodeA, ListNode* pNodeB )
+	{
+		if( pNodeA && pNodeB )
+			return pNodeA->val > pNodeB->val;
+		
+		return false;
+	};
+	priority_queue<ListNode*, std::vector<ListNode*>, decltype(cmp)> q(cmp);
+	
+	for( auto* pListNode : lists )
+		if( pListNode )
+			q.push( pListNode );
+	
+	ListNode* head = new ListNode(-1);
+	ListNode* it = head;
+	while( !q.empty() )
+	{
+		ListNode* t = q.top();
+		it->next = new ListNode( t->val );
+		it = it->next;
+		
+		q.pop();
+		if( t->next )
+			q.push( t->next );
+	}
+
+	return head->next;
+}
+
+#pragma mark -
+void merge(vector<int>& nums1, int m, vector<int>& nums2, int n) {
+	// [ 1  2  3  4  5]
+	//      i        k
+	// [ 3  4  5 ]
+	//         j
+	int i = m - 1, j = n - 1;
+	int k = m + n - 1;
+	while( k >= 0 )
+	{
+		if( i >= 0 && ( j < 0 || nums1[i] >= nums2[j] ) )
+		{
+			nums1[k] = nums1[i];
+			i--;
+		}
+		else
+		{
+			nums1[k] = nums2[j];
+			j--;
+		}
+		k--;
+	}
+}
+
+#pragma mark -
+vector<pair<int, int>> getSkyline(vector<vector<int>>& buildings) {
+	vector< pair< int, int > > cps; // critial points
+	for( const auto& building : buildings )
+	{
+		cps.push_back( make_pair( building[0], building[2] ) );
+		cps.push_back( make_pair( building[1], -building[2] ) );
+	}
+	sort( cps.begin(), cps.end(), []( const pair<int, int>& a, const pair<int, int>& b ){
+		if( a.first == b.first )
+			return a.second > b.second;
+		
+		return a.first < b.first;
+	});
+	
+	vector< pair< int, int > > res;
+	multiset< int > maxHeight;
+	for( const auto& cp : cps )
+	{
+		int h = cp.second;
+		if( h > 0 )
+		{
+			// entrance
+			int m = maxHeight.empty() ? 0 : *maxHeight.rbegin();
+			if( h > m )
+				res.push_back( cp );
+			
+			maxHeight.emplace( h );
+		}
+		else
+		{
+			// exit
+			maxHeight.erase( maxHeight.find( -h ) );
+			
+			int m = maxHeight.empty() ? 0 : *maxHeight.rbegin();
+			if( -h > m )
+				res.push_back( make_pair( cp.first, m ) );
+		}
+	}
+	
+	return res;
+}
+
+#pragma mark -
+
+namespace JumpGameDFS {
+	bool canJumpHelper( vector<int>& nums, int index, int target )
+	{
+		if( index == target )
+			return true;
+		
+		if( index >= 0 && index < nums.size() )
+		{
+			int step = nums[index];
+			for( int i = step; i > 0; i-- )
+			{
+				if( canJumpHelper( nums, index + i, target ) )
+					return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	bool canJump(vector<int>& nums) {
+		if( nums.empty() )
+			return true;
+		
+		return canJumpHelper( nums, 0, nums.size() - 1 );
+	}
+}
+
+namespace JumpGameDP {
+ 	bool canJump(vector<int>& nums) {
+        // [2,        3,       1,        1,         4]
+        //  0         1        2         3          4
+        //  true     dp[1]    dp[2]
+        //                    dp[1]    dp[2]       dp[3]
+        if( nums.empty() )  return true;
+        vector<bool> dp( nums.size(), false );
+        dp[nums.size() - 1] = true;
+        for( int i = nums.size() - 1; i >= 0; i-- )
+        {
+            int step = nums[i];
+            for( int j = 1; j <= step && i + j < nums.size(); j++ )
+            {
+                dp[i] = dp[i] | dp[i+j];
+            }
+        }
+        return dp[0];
+     }
+}
 
 #pragma mark - run
 
 void Level1::Run()
 {
-	Mutable::testNumMatrix();
+	JumpGameDP::testCanJump();
 }
