@@ -2395,9 +2395,890 @@ namespace JumpGameDP {
      }
 }
 
+#pragma mark -
+int jump(vector<int>& nums) {
+	if( nums.empty() )  return 0;
+	
+	// [2,3,1,1,4]
+	//        i
+	//  e : 4
+	//  r : 4
+	//  l : 2
+	
+	int end = 0, reachable = 0, level = 0;
+	for( int i = 0; i < nums.size() - 1; i++ )
+	{
+		reachable = max( reachable, i + nums[i] );
+		if( end == i )
+		{
+			level++;
+			end = reachable;
+		}
+	}
+	return level;
+}
+
+#pragma mark -
+int calculate(string s) {
+	stack<int> st;
+	int num = 0;
+	char op = '+';
+	for( int i = 0; i < s.size(); i++ )
+	{
+		if( isdigit( s[i] ) )
+		{
+			num = num * 10 + ( s[i] - '0' );
+		}
+		
+		// 3  +  5
+		// 3-5+7 -> +3-5+7
+		// '-'
+		if( s[i] == '+' || s[i] == '-' || s[i] == '*' || s[i] == '/' || i == s.size() - 1 )
+		{
+			if( op == '+' )
+			{
+				st.push( num );
+			}
+			else if( op == '-' )
+			{
+				st.push( -num );
+			}
+			else if( op == '*' || op == '/' )
+			{
+				auto top = st.top();
+				st.pop();
+				st.push( op == '*' ? num * top : top / num );
+			}
+			op = s[i];
+			num = 0;
+		}
+	}
+	
+	int res = 0;
+	while( !st.empty() )
+	{
+		res += st.top();
+		st.pop();
+	}
+	
+	return res;
+}
+
+#pragma mark -
+int canCompleteCircuit(vector<int>& gas, vector<int>& cost) {
+	int partialSum{ 0 }, total{ 0 }, start{ 0 };
+	for( int i = 0; i < gas.size(); i++ )
+	{
+		total += gas[i] - cost[i];
+		partialSum += gas[i] - cost[i];
+		if( partialSum < 0 )
+		{
+			start = i + 1;
+			partialSum = 0;
+		}
+	}
+	return total < 0 ? -1 : start;
+}
+
+#pragma mark -
+
+int removeDuplicates(vector<int>& nums) {
+	// 1 2 1 2 3
+	//         i
+	//     j
+	int j = 0;
+	for( int i = 1; i < nums.size(); i++ )
+	{
+		if( nums[i] != nums[j] )
+			nums[++j] = nums[i];
+	}
+	return j + 1;
+}
+
+class TopologicalSortBFS {
+	vector< bool > m_visited;
+	vector< int > m_indegree;
+	unordered_map< int, vector<int> > m_graph;
+	
+public:
+	vector<int> findOrder(int numCourses, vector<pair<int, int>>& prerequisites) {
+		m_visited = vector< bool >( numCourses, false );
+		m_indegree = vector< int >( numCourses, 0 );
+		queue< int > q;
+		
+		// [[1,0],[2,0],[3,1],[3,2]]
+		for( auto& p : prerequisites )
+		{
+			m_graph[p.second].push_back( p.first );
+		}
+		
+		for( auto& p : m_graph )
+		{
+			for( auto& node : p.second )
+			{
+				m_indegree[node]++;
+			}
+		}
+		
+		for( int i = 0; i < numCourses; i++ )
+			if( m_indegree[i] == 0 )
+				q.push( i );
+		
+		vector< int > res;
+		int visited = 0;
+		while( !q.empty() )
+		{
+			auto current = q.front();
+			q.pop();
+			for( auto& neighbor : m_graph[current] )
+			{
+				m_indegree[neighbor]--;
+				if( m_indegree[neighbor] == 0 && !m_visited[ neighbor ] )
+					q.push( neighbor );
+			}
+			
+			m_visited[ current ] = true;
+			res.push_back( current );
+			visited++;
+		}
+		
+		if( visited != numCourses )
+			return {};
+		
+		return res;
+	}
+};
+
+class MergeSort {
+public:
+	ListNode* sortList(ListNode* head)
+	{
+		if( head == nullptr || head->next == nullptr )   return head;
+		
+		// 1 2
+		// s
+		// f
+		ListNode *fast=head, *slow=head;
+		while( fast->next && fast->next->next )
+		{
+			slow = slow->next;
+			fast = fast->next->next;
+		}
+		
+		ListNode* secondHead = slow->next;
+		slow->next = nullptr;
+		
+		ListNode* first = sortList( head );
+		ListNode* second = sortList( secondHead );
+		
+		return Merge( first, second );
+	}
+	
+private:
+	// Merge two linked list.
+	ListNode* Merge( ListNode* l1, ListNode* l2 )
+	{
+		ListNode* pivot = new ListNode(-1);
+		ListNode* it = pivot;
+		while( l1 && l2 )
+		{
+			ListNode* l1Next = l1->next;
+			ListNode* l2Next = l2->next;
+			if( l1->val < l2->val )
+			{
+				it->next = l1;
+				it = l1;
+				l1 = l1Next;
+			}
+			else
+			{
+				it->next = l2;
+				it = l2;
+				l2 = l2Next;
+			}
+		}
+		
+		if( l1 )
+			it->next = l1;
+		else if( l2 )
+			it->next = l2;
+		
+		return pivot->next;
+	}
+};
+
+void testMergeSort()
+{
+	vector< int > v = { 2, 1, 3, 4};
+	ListNode* head = new ListNode(-1);
+	ListNode* it = head;
+	for( auto i : v )
+	{
+		it->next = new ListNode( i );
+		it = it->next;
+	}
+	
+	MergeSort m;
+	it = m.sortList( head->next );
+	
+	while( it )
+	{
+		cout << it->val << endl;
+		it = it->next;
+	}
+}
+
+#pragma mark -
+
+int MyLowerBound( vector<int>& nums, int target )
+{
+	// 1 3 5 5 5 5 7 9 11 : 5
+	//     b
+	//     e
+	//   m
+	int begin = 0, end = (int)nums.size();
+	while( begin < end )
+	{
+		int mid = begin + ( end - begin ) / 2;
+		int value = nums[mid];
+		if( value < target )
+		{
+			begin = mid + 1;
+		}
+		else
+		{
+			end = mid;
+		}
+	}
+	
+	return begin;
+}
+
+void testMyLowerBound()
+{
+	vector<int> v = {};
+	cout << MyLowerBound(v, 0) << endl;
+	
+	v = {1};
+	cout << MyLowerBound(v, 0) << endl;
+	cout << MyLowerBound(v, 1) << endl;
+	cout << MyLowerBound(v, 2) << endl;
+	
+	v = {1,2};
+	cout << MyLowerBound(v, 0) << endl;
+	cout << MyLowerBound(v, 1) << endl;
+	cout << MyLowerBound(v, 2) << endl;
+	cout << MyLowerBound(v, 3) << endl;
+	
+	v = {1,2,3};
+	cout << MyLowerBound(v, 0) << endl;
+	cout << MyLowerBound(v, 1) << endl;
+	cout << MyLowerBound(v, 2) << endl;
+	cout << MyLowerBound(v, 3) << endl;
+	cout << MyLowerBound(v, 4) << endl;
+}
+
+#pragma mark -
+bool canAttendMeetings(vector<Interval> &intervals) {
+	if( intervals.empty() ) return true;
+	
+	sort( intervals.begin(), intervals.end(), [](const Interval& a, const Interval& b){
+		return a.start < b.start;
+	});
+	
+	Interval moving = intervals[0];
+	for( int i = 1; i < intervals.size(); i++ )
+	{
+		const auto& cur = intervals[i];
+		if( cur.start < moving.end )
+		{
+			return false;
+		}
+		else
+		{
+			moving = cur;
+		}
+	}
+	return true;
+}
+
+#include "testCase1.h"
+
+void testCanAttendMeetings()
+{
+	canAttendMeetings( testVector1 );
+}
+
+#pragma mark -
+ListNode* removeNthFromEnd(ListNode* head, int n) {
+	if( head == nullptr )   return head;
+	
+	// 1->2->3->4->5
+	//             i
+	//          s
+	// p
+	// 0
+	ListNode *it = head, *slow = head;
+	ListNode *pre = nullptr;
+	while( it != nullptr )
+	{
+		it = it->next;
+		
+		if( n > 0 )
+			n--;
+		else if( n == 0 )
+		{
+			pre = slow;
+			slow = slow->next;
+		}
+	}
+	
+	if( pre && slow )
+	{
+		pre->next = slow->next;
+	}
+	return head;
+}
+
+void testRemoveNthFromEnd()
+{
+	vector<int> v = { 1, 2 ,3 ,4 ,5};
+	ListNode* head = new ListNode(-1);
+	ListNode* it = head;
+	for( auto i : v )
+	{
+		it->next = new ListNode( i );
+		it = it->next;
+	}
+	removeNthFromEnd( head, 2 );
+}
+
+
+class InorderSuccessor  {
+	bool m_found { false };
+	TreeNode* pre { nullptr };
+	TreeNode* lookingFor { nullptr };
+	TreeNode* res { nullptr };
+	
+public:
+	void InorderVisit(TreeNode* node)
+	{
+		if( m_found )
+			return;
+		
+		if( node != nullptr )
+		{
+			InorderVisit( node->left );
+			
+			// Do something.
+			if( pre == lookingFor )
+			{
+				pre = nullptr;	// Reset pre.
+				m_found = true;
+				res = node;
+				return;
+			}
+			
+			pre = node;
+			
+			InorderVisit( node->right );
+		}
+	}
+	
+	/*
+	 * @param root: The root of the BST.
+	 * @param p: You need find the successor node of p.
+	 * @return: Successor of p.
+	 */
+	TreeNode * inorderSuccessor(TreeNode * root, TreeNode * p) {
+		lookingFor = p;
+		InorderVisit( root );
+		return res;
+	}
+};
+
+void testInorder()
+{
+	TreeNode* root = new TreeNode(4);
+	root->left = new TreeNode(3);
+	root->right = new TreeNode(5);
+	root->left->left = new TreeNode(2);
+	root->right->right = new TreeNode(6);
+	InorderSuccessor i;
+	i.inorderSuccessor(root, root->left->left);
+}
+
+class CountSmaller {
+	class Record
+	{
+	public:
+		int value{ 0 };
+		int index{ 0 };
+		Record( int v, int i ) : value(v), index(i){}
+
+		bool operator<(const Record& r)
+		{
+			return value < r.value;
+		}
+	};
+	// 4 3 1 2
+	// 0 1 2 3
+	//
+	// 3 4 1 2
+	// 1 0 2 3
+	//
+	// 1 2 3 4
+	// 2 3 1 0
+	
+	vector<int> m_res;
+public:
+	void Merge( vector< Record >& nums, int start, int mid, int end )
+	{
+		vector<Record> a( nums.begin() + start, nums.begin() + mid + 1);
+		vector<Record> b( nums.begin() + mid + 1, nums.begin() + end + 1);
+		int ia = 0;
+		int ib = 0;
+		int moveCount = 0;
+		// [3 4] [1 2]
+		// [1 2 3 4] => moveCount = 2
+		for( int i = start; i <= end; i++ )
+		{
+			if( ia < a.size() && ib < b.size() )
+			{
+				// [ keyA keyB ]
+				// -> [ keyB keyA ]
+				if( b[ib] < a[ia] )
+				{
+					nums[i] = b[ib];
+					moveCount++;
+					ib++;
+				}
+				else
+				{
+					nums[i] = a[ia];
+					m_res[a[ia].index] += moveCount;
+					ia++;
+				}
+			}
+			else if( ia < a.size() )
+			{
+				m_res[a[ia].index] += moveCount;
+				nums[i] = a[ia++];
+			}
+			else
+			{
+				nums[i] = b[ib++];
+			}
+		}
+	}
+	
+	void MergeSort( vector< Record >& nums, int start, int end )
+	{
+		if( start >= end )   return;
+		
+		int mid = start + ( end - start ) / 2;
+		MergeSort( nums, start, mid );
+		MergeSort( nums, mid + 1, end );
+		Merge( nums, start, mid, end );
+	}
+	
+	vector<int> countSmaller(vector<int>& nums) {
+		vector<Record> records;
+		for( int i = 0; i < nums.size(); i++ )
+		{
+			records.push_back( Record( nums[i], i ) );
+		}
+		
+		m_res = vector<int>( nums.size(), 0);
+		MergeSort( records, 0, (int)records.size() - 1 );
+		return m_res;
+	}
+};
+
+void testCountSmaller()
+{
+	vector<int> v = { 4, 3, 1, 2 };
+	CountSmaller c;
+	auto res = c.countSmaller( v );
+	for( auto i : res )
+		cout << i << " ";
+}
+
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class BuildTree {
+public:
+	TreeNode* buildTreeHelper( vector<int>& preorder, unordered_map< int, int >& nodeIndex, int preStart, int inStart, int len )
+	{
+		if( len <= 0 )  return nullptr;
+		
+		// preorder = {7,10,4,3,1,2,8,11}
+		// inorder = {4,10,3,1,7,11,8,2}
+		int rootValue = preorder[preStart];
+		int rootIndex = nodeIndex[rootValue];
+		int leftLen = rootIndex - inStart;
+		int rightLen = inStart + len - rootIndex - 1;
+		TreeNode* root = new TreeNode( rootValue );
+		root->left = buildTreeHelper( preorder, nodeIndex, preStart + 1, inStart, leftLen );
+		root->right = buildTreeHelper( preorder, nodeIndex, preStart + leftLen + 1, rootIndex + 1, rightLen );
+		return root;
+	}
+	
+	TreeNode* buildTree(vector<int>& preorder, vector<int>& inorder) {
+		// preorder = [3,9,20,15,7]
+		// inorder = [9,3,15,20,7]
+		
+		unordered_map< int, int > nodeIndex;
+		for( int i = 0; i < inorder.size(); i++ )
+		{
+			nodeIndex[inorder[i]] = i;
+		}
+		return buildTreeHelper( preorder, nodeIndex, 0, 0, inorder.size() );
+	}
+};
+
+void testBuildTree()
+{
+	vector<int> pre = {3,9,20,15,7};
+	vector<int> in = {9,3,15,20,7};
+	BuildTree bt;
+	auto t = bt.buildTree( pre, in );
+	cout << t->val;
+}
+
+
+
+class Codec {
+public:
+	
+	// Encodes a tree to a single string.
+	string serialize(TreeNode* root) {
+		queue< TreeNode* > q;
+		string res;
+		q.push( root );
+		while( !q.empty() )
+		{
+			auto pNode = q.front();
+			q.pop();
+			
+			if( pNode )
+			{
+				res += to_string( pNode->val );
+				res += ",";
+				q.push( pNode->left );
+				q.push( pNode->right );
+			}
+			else
+			{
+				res += "N,";
+			}
+		}
+		return res;
+	}
+	
+	// Decodes your encoded data to tree.
+	TreeNode* deserialize(string data) {
+		queue< TreeNode** > q;
+		TreeNode* pRoot = nullptr;
+		q.push( &pRoot );
+		int i = 0;
+		while( i < data.size() )
+		{
+			int end = i;
+			while( data[end] != ',' )
+				end++;
+			
+			string sub = data.substr(i, end - i );
+			if( sub != "N" )
+			{
+				int value = stoi( sub );
+				TreeNode** pp = q.front();
+				*pp = new TreeNode( value );
+				q.push( &((*pp)->left) );
+				q.push( &((*pp)->right) );
+			}
+			
+			q.pop();
+			i = end + 1;
+		}
+		return pRoot;
+	}
+};
+
+void testCodec()
+{
+	// Your Codec object will be instantiated and called as such:
+	TreeNode* root = new TreeNode(4);
+	root->left = new TreeNode(3);
+	root->right = new TreeNode(5);
+	root->right->left = new TreeNode(2);
+	root->right->right = new TreeNode(6);
+
+	Codec codec;
+	codec.deserialize(codec.serialize(root));
+}
+
+
+class LongestIncreasingPath {
+public:
+	vector<pair<int,int>> dirs = {{-1,0}, {1, 0}, {0, -1}, {0, 1} };
+	
+	bool isValidBound( int i, int j, int rowNum, int colNum )
+	{
+		return i >= 0 && i < rowNum && j >= 0 && j < colNum ;
+	}
+	
+	int dfs( vector<vector<int>>& matrix, vector<vector<int>>& cache, int i, int j, int rowNum, int colNum )
+	{
+		if( cache[i][j] != 0 )  return cache[i][j];
+		
+		int m = 1;
+		for( const auto& dir : dirs )
+		{
+			int nextI = i + dir.first;
+			int nextJ = j + dir.second;
+			if( isValidBound( i, j, rowNum, colNum ) && isValidBound( nextI, nextJ, rowNum, colNum )
+			   && matrix[i][j] > matrix[nextI][nextJ] )
+			{
+				m = max( m, dfs( matrix, cache, nextI, nextJ, rowNum, colNum ) + 1 );
+			}
+		}
+		
+		cache[i][j] = m;
+		return m;
+	}
+	
+	int longestIncreasingPath(vector<vector<int>>& matrix) {
+		if( matrix.empty() )    return 0;
+		
+		int rowNum = matrix.size();
+		int colNum = matrix[0].size();
+		vector<vector<int>> cache( rowNum, vector<int>(colNum, 0) );
+		int res = 0;
+		for( int i = 0; i < rowNum; i++ )
+		{
+			for( int j = 0; j < colNum; j++ )
+			{
+				res = max( res, dfs( matrix, cache, i, j, rowNum, colNum ) );
+			}
+		}
+		return res;
+	}
+};
+
+void testLongestIncreasingPath()
+{
+	vector<vector<int>> tests = {{9,9,4},{6,6,8},{2,1,1}};
+	LongestIncreasingPath l;
+	l.longestIncreasingPath(tests);
+}
+
+class NumIslands {
+public:
+	vector< pair< int, int > > dirs = { { 1, 0 }, {-1, 0 }, {0, 1}, { 0, -1} };
+	
+	bool isValid( int i, int j, int rowNum, int colNum )
+	{
+		return i >= 0 && i < rowNum && j >= 0 && j < colNum;
+	}
+	
+	void visitDfs( vector<vector<char>>& grid, int i, int j, int rowNum, int colNum )
+	{
+		if( !isValid( i, j, rowNum, colNum) )
+			return;
+		
+		if( grid[i][j] != '1' )
+			return;
+		
+		for( const auto& dir : dirs )
+		{
+			int nextI = i + dir.first;
+			int nextJ = j + dir.second;
+			visitDfs( grid, nextI, nextJ, rowNum, colNum );
+		}
+		
+		grid[i][j] = 'X';
+	}
+	
+	int numIslands(vector<vector<char>>& grid) {
+		if( grid.empty() )  return 0;
+		
+		int island = 0;
+		int rowNum = grid.size();
+		int colNum = grid[0].size();
+		for( int i = 0; i < rowNum; i++ )
+		{
+			for( int j = 0; j < colNum; j++ )
+			{
+				if( grid[i][j] == '1' )
+				{
+					visitDfs( grid, i, j, rowNum, colNum );
+					island++;
+				}
+			}
+		}
+		return island;
+	}
+};
+
+void testNumIslands()
+{
+	NumIslands i;
+	vector<vector<char>> grid = {{'1','1','1','1','0'},{'1','1','0','1','0'},{'1','1','0','0','0'},{'0','0','0','0','0'}};
+	i.numIslands(grid);
+}
+
+/**
+ * Definition for a point.
+ * struct Point {
+ *     int x;
+ *     int y;
+ *     Point() : x(0), y(0) {}
+ *     Point(int a, int b) : x(a), y(b) {}
+ * };
+ */
+// Not working....
+class NumIslandsIIWrong {
+public:
+	// Custom Hash Functor that will compute the hash on the
+	// passed string objects length
+	struct PointHash {
+	public:
+		size_t operator()(const Point& pt) const {
+			string str = to_string(pt.x) + to_string(pt.y);
+			return std::hash<string>()(str);
+		}
+	};
+	
+	// Custom comparator that compares the string objects by length
+	struct PointEqual {
+	public:
+		bool operator()(const Point& pt1, const Point& pt2 ) const {
+			
+			if (pt1.x == pt2.x && pt1.y == pt2.y )
+				return true;
+			else
+				return false;
+		}
+	};
+	
+	unordered_set<Point, PointHash, PointEqual> islandSet;
+	vector< pair< int, int > > dirs = { { 1, 0 }, {-1, 0 }, {0, 1}, { 0, -1} };
+	
+	bool isValid( int i, int j, int rowNum, int colNum )
+	{
+		return i >= 0 && i < rowNum && j >= 0 && j < colNum;
+	}
+	
+	/**
+	 * @param n: An integer
+	 * @param m: An integer
+	 * @param operators: an array of point
+	 * @return: an integer array
+	 */
+	vector<int> numIslands2(int n, int m, vector<Point> &operators) {
+		//     0        0       1       1       1
+		//   0 X 0    1 X 0   1 X 0   1 X 0   1 X 1
+		//     0        0       0       1       1
+		vector<int> res;
+		int islandCnt = 0;
+		for( const auto& pt : operators )
+		{
+			bool neigboorExist = false;
+			for( const auto& dir : dirs )
+			{
+				Point nextPt( pt.x + dir.first, pt.y + dir.second );
+				if( isValid( nextPt.x, nextPt.y, n, m ) )
+				{
+					if( islandSet.find( nextPt) != islandSet.end() )
+					{
+						neigboorExist = true;
+						break;
+					}
+				}
+			}
+			
+			if( !neigboorExist )
+				islandCnt++;
+			
+			res.push_back( islandCnt );
+			islandSet.insert( pt );
+		}
+		return res;
+	}
+};
+
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+ * };
+ */
+class ZigzagLevelOrder {
+public:
+	vector<vector<int>> zigzagLevelOrder(TreeNode* root) {
+		vector<vector<int>> res;
+		if( !root ) return res;
+		
+		deque< TreeNode* > q;
+		q.push_back( root );
+		bool fLeft = true;
+		while( !q.empty() )
+		{
+			int levelCount = q.size();
+			int popCount = 0;
+			vector< int > levelRes;
+			while( popCount < levelCount )
+			{
+				auto pTop = q.front();
+				levelRes.push_back( pTop->val );
+				q.pop_front();
+				popCount++;
+				if( fLeft )
+				{
+					if( pTop->left )
+						q.push_front( pTop->left );
+					if( pTop->right )
+						q.push_front( pTop->right );
+				}
+				else
+				{
+					if( pTop->right )
+						q.push_back( pTop->right );
+					if( pTop->left )
+						q.push_back( pTop->left );
+				}
+			}
+			
+			res.push_back( levelRes );
+			fLeft = !fLeft;
+		}
+		
+		return res;
+	}
+};
+
+void testZigzagLevelOrder()
+{
+	Codec c;
+	TreeNode* node = c.deserialize("1,2,3,4,5,6,7");
+	ZigzagLevelOrder z;
+	z.zigzagLevelOrder(node);
+}
+
 #pragma mark - run
 
 void Level1::Run()
 {
-	JumpGameDP::testCanJump();
+	testZigzagLevelOrder();
 }

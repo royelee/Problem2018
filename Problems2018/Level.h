@@ -55,6 +55,15 @@ struct RandomListNode {
 	RandomListNode(int x) : label(x), next(NULL), random(NULL) {}
 };
 
+class Interval {
+public:
+	int start, end;
+	Interval(int start, int end) {
+		this->start = start;
+		this->end = end;
+	}
+};
+
 inline std::string BoolToStr(bool a) { return a ? "true" : "false"; }
 
 inline void Verify( bool condition, const std::string& message )

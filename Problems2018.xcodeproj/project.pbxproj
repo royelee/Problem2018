@@ -28,6 +28,7 @@
 		B2786E9120E8017A0010B31E /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		B2786E9820E83B6E0010B31E /* Level.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Level.h; sourceTree = "<group>"; };
 		B2786E9920E83B6E0010B31E /* Level1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Level1.cpp; sourceTree = "<group>"; };
+		B2DBE2FE2133CCDC0090C29E /* testCase1.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = testCase1.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +64,7 @@
 				B2786E9120E8017A0010B31E /* main.cpp */,
 				B2786E9820E83B6E0010B31E /* Level.h */,
 				B2786E9920E83B6E0010B31E /* Level1.cpp */,
+				B2DBE2FE2133CCDC0090C29E /* testCase1.h */,
 			);
 			path = Problems2018;
 			sourceTree = "<group>";
